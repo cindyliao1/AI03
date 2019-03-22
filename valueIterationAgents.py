@@ -48,7 +48,7 @@ class ValueIterationAgent(ValueEstimationAgent):
         # Write value iteration code here
         "*** YOUR CODE HERE ***"
         for i in range(self.iterations):
-            curr_value = self.values
+            curr_value = self.values.copy()
             states = self.mdp.getStates()
             for state in states:
                 if not self.mdp.isTerminal(state):
@@ -59,6 +59,7 @@ class ValueIterationAgent(ValueEstimationAgent):
 
                     best_action = max(q_values)
                     curr_value[state] = best_action
+            self.values = curr_value
 
     def getValue(self, state):
         """
