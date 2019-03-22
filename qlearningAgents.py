@@ -4,7 +4,7 @@
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -41,9 +41,9 @@ class QLearningAgent(ReinforcementAgent):
     def __init__(self, **args):
         "You can initialize Q-values here..."
         ReinforcementAgent.__init__(self, **args)
-        self.values = util.Counter()
 
         "*** YOUR CODE HERE ***"
+        self.values = util.Counter()
 
     def getQValue(self, state, action):
         """
@@ -52,7 +52,8 @@ class QLearningAgent(ReinforcementAgent):
           or the Q node value otherwise
         """
         "*** YOUR CODE HERE ***"
-
+        if (state, action) not in self.values:
+          self.values[(state, action)] = 0.0
         return self.values[(state, action)]
 
     def computeValueFromQValues(self, state):
@@ -65,11 +66,13 @@ class QLearningAgent(ReinforcementAgent):
         "*** YOUR CODE HERE ***"
         q_vals = []
         actions = self.getLegalActions(state)
-        for action in actions:
-            q = self.getQValue(state, action)
-            q_vals.append(q)
-        q_val = max(q_vals)
-        return q_val
+        if len(actions)==0:
+            return 0.0
+        else:
+            action_dict=util.Counter()
+            for action in actions:
+                action_dict[(state, action)]=self.getQValue(state,action)
+            return action_dict[action_dict.argMax()]
 
     def computeActionFromQValues(self, state):
         """
@@ -78,8 +81,14 @@ class QLearningAgent(ReinforcementAgent):
           you should return None.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
-
+        actions= self.getLegalActions(state)
+        if len(actions) >0:
+            action_dict=util.Counter()
+            for action in actions:
+                action_dict[action]=self.getQValue(state,action)
+            return action_dict.argMax()
+        else:
+            return None
     def getAction(self, state):
         """
           Compute the action to take in the current state.  With
@@ -95,8 +104,12 @@ class QLearningAgent(ReinforcementAgent):
         legalActions = self.getLegalActions(state)
         action = None
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
-
+        if len(legalActions)>0:
+            use_random=util.flipCoin(self.epsilon)
+            if use_random:
+                action=random.choice(legalActions)
+            else:
+                action=self.computeActionFromQValues(state)
         return action
 
     def update(self, state, action, nextState, reward):
@@ -109,8 +122,7 @@ class QLearningAgent(ReinforcementAgent):
           it will be called on your behalf
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
-
+        self.values[(state,action)]=(1-self.alpha)*self.getQValue(state,action) +(self.alpha)*(reward+self.discount*self.computeValueFromQValues(nextState))
     def getPolicy(self, state):
         return self.computeActionFromQValues(state)
 
@@ -172,14 +184,16 @@ class ApproximateQAgent(PacmanQAgent):
           where * is the dotProduct operator
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.weights*self.featExtractor.getFeatures(state,action)
 
     def update(self, state, action, nextState, reward):
         """
            Should update your weights based on transition
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        features=self.featExtractor.getFeatures(state,action)
+        for feature in features:
+            self.weights[feature]=self.weights[feature]+self.alpha*(reward+self.discount*self.computeValueFromQValues(nextState)-self.getQValue(state,action))*features[feature]
 
     def final(self, state):
         "Called at the end of each game."
